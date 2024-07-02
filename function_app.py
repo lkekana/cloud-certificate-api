@@ -3,6 +3,7 @@ import azure.functions as func
 import logging
 from file import hello_world
 from utils import parse_multipart_form_data
+import traceback
 
 
 app = func.FunctionApp(http_auth_level=func.AuthLevel.ANONYMOUS)
@@ -41,25 +42,31 @@ def upload(req: func.HttpRequest) -> func.HttpResponse:
                 status_code=400
             )
 
-    if content_type == 'multipart/form-data':
+    if 'multipart/form-data' in content_type:
         try:
             # handle multipart form data
-            files = parse_multipart_form_data(req)
-            for name, (filename, content) in files.items():
+            form_data = parse_multipart_form_data(req)
+            files = form_data.get('files')
+            # print(files)
+            for file_name, file_data in files.items():
+                # parsed_data["files"][file.file_name] = {"length": len(f), "content": f}
+                length = file_data.get('length')
+                content = file_data.get('content')
+                print(f"File {file_name} received with content length {length}")
                 # process the files
-                print(f"File {filename} received with name {name}")
                 pass
             # process the files
         except Exception as e:
+            traceback.print_exc()
             logging.error(f"Error processing multipart form data: {e}")
             return func.HttpResponse(
                 "Error processing multipart form data",
                 status_code=500
             )
-    elif content_type == 'application/json':
+    elif 'application/json' in content_type:
         # handle json
         print(req.get_json())
-    elif content_type == 'application/pdf':
+    elif 'application/pdf' in content_type:
         # handle pdf
         # get filename if available
         filename = req.headers.get('filename')

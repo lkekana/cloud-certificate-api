@@ -1,6 +1,9 @@
 import azure.functions as func
 import logging
 from multipart import MultipartParser
+from multipart.multipart import parse_options_header, parse_form
+from multipart.multipart import Field, File
+from multipart.multipart import FormParser
 import io
 import cgi
 import os
@@ -10,20 +13,44 @@ load_dotenv()
 def parse_multipart_form_data(req: func.HttpRequest) -> dict:
     # Extract the boundary from the content type header
     content_type_header = req.headers.get('content-type')
-    _, params = cgi.parse_header(content_type_header)
-    boundary = params['boundary']
-
-    # Use the boundary to parse the request body
-    parser = MultipartParser(stream=io.BytesIO(req.get_body()), boundary=boundary)
+    content_type, params = parse_options_header(content_type_header)
+    boundary = params.get(b'boundary')
     
-    # Extract parts
-    files = {}
-    for part in parser.parts():
-        # Assuming part has filename attribute to consider it as file
-        if part.filename:
-            # You can save the file here or process it as needed
-            files[part.name] = (part.filename, part.content)
-    return files
+    # Initialize storage for parsed data
+    parsed_data = {"fields": {}, "files": {}}
+
+    # Callbacks for handling parsed fields and files
+    def on_field(field: Field):
+        logging.info(f"Parsed field named {field.field_name} with value {field.value}")
+        parsed_data["fields"][field.field_name] = field.value
+
+    def on_file(file: File):
+        # Assuming file content is stored in memory, for large files consider streaming to storage
+        logging.info(f"Parsed file named {file.field_name} with filename {file.file_name}")
+        f: io.BytesIO = file.file_object
+        file_bytes = f.getvalue()
+        length = len(file_bytes)
+        print('file length:', length, len(file_bytes))
+        print(f.getvalue()[0:10])
+        # print(file.actual_file_name)
+        # file.flush_to_disk()
+        # print(file.actual_file_name)
+        parsed_data["files"][file.file_name] = {"length": length, "content": file_bytes}
+
+    # Create the parser with callbacks
+    callbacks = {
+        'on_field': on_field,
+        'on_file': on_file,
+    }
+    
+    print('content_type_header:', content_type_header)
+    print('content_type:', content_type)
+    print('boundary:', boundary)
+    content_type_str = content_type.decode('utf-8')
+    parser = FormParser(content_type_str, on_field, on_file, boundary=boundary)
+    body = req.get_body()
+    parser.write(body)
+    return parsed_data
 
 def get_env_var(name: str) -> str:
     return os.getenv(name)

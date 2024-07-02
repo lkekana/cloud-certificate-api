@@ -9,7 +9,7 @@ app = func.FunctionApp(http_auth_level=func.AuthLevel.ANONYMOUS)
 
 @app.route(route="HttpExample")
 def HttpExample(req: func.HttpRequest) -> func.HttpResponse:
-    
+
     '''
     logging.info('Python HTTP trigger function processed a request.')
     hello_world()
@@ -32,7 +32,7 @@ def HttpExample(req: func.HttpRequest) -> func.HttpResponse:
              status_code=200
         )
     '''
-    
+
     content_type = req.headers.get('content-type')
     if not content_type:
         content_type = req.headers.get('Content-Type')
@@ -41,24 +41,33 @@ def HttpExample(req: func.HttpRequest) -> func.HttpResponse:
                 "Content-Type header is missing. There is no way to determine the type of the content you are sending",
                 status_code=400
             )
-        
+
     if content_type == 'multipart/form-data':
-        # handle multipart form data
-        files = parse_multipart_form_data(req)
-        for name, (filename, content) in files.items():
+        try:
+            # handle multipart form data
+            files = parse_multipart_form_data(req)
+            for name, (filename, content) in files.items():
+                # process the files
+                print(f"File {filename} received with name {name}")
+                pass
             # process the files
-            print(f"File {filename} received with name {name}")
-            pass
-        # process the files
+        except Exception as e:
+            logging.error(f"Error processing multipart form data: {e}")
+            return func.HttpResponse(
+                "Error processing multipart form data",
+                status_code=500
+            )
     elif content_type == 'application/json':
         # handle json
+        print(req.get_json())
     elif content_type == 'application/pdf':
         # handle pdf
         # get filename if available
         filename = req.headers.get('filename')
-        time = datetime.datetime.now().strftime("%Y%m%d%H%M%S%f"
+        time = datetime.datetime.now().strftime("%Y%m%d%H%M%S%f")
     else:
         return func.HttpResponse(
             "This endpoint only accepts application/json and application/pdf",
             status_code=400
         )
+    return func.HttpResponse(status_code=200)

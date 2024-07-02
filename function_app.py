@@ -65,6 +65,7 @@ def HttpExample(req: func.HttpRequest) -> func.HttpResponse:
         # get filename if available
         filename = req.headers.get('filename')
         time = datetime.datetime.now().strftime("%Y%m%d%H%M%S%f")
+        print(f"Received a PDF file with filename {filename or time}.")
     else:
         return func.HttpResponse(
             "This endpoint only accepts application/json and application/pdf",

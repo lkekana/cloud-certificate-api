@@ -4,7 +4,7 @@ from multipart import MultipartParser
 import io
 import cgi
 
-def parse_multipart_form_data(req: func.HttpRequest):
+def parse_multipart_form_data(req: func.HttpRequest) -> dict:
     # Extract the boundary from the content type header
     content_type_header = req.headers.get('content-type')
     _, params = cgi.parse_header(content_type_header)

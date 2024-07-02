@@ -1,6 +1,9 @@
+import datetime
 import azure.functions as func
 import logging
 from file import hello_world
+from utils import parse_multipart_form_data
+
 
 app = func.FunctionApp(http_auth_level=func.AuthLevel.ANONYMOUS)
 
@@ -39,10 +42,21 @@ def HttpExample(req: func.HttpRequest) -> func.HttpResponse:
                 status_code=400
             )
         
-    if content_type == 'application/json':
+    if content_type == 'multipart/form-data':
+        # handle multipart form data
+        files = parse_multipart_form_data(req)
+        for name, (filename, content) in files.items():
+            # process the files
+            print(f"File {filename} received with name {name}")
+            pass
+        # process the files
+    elif content_type == 'application/json':
         # handle json
     elif content_type == 'application/pdf':
         # handle pdf
+        # get filename if available
+        filename = req.headers.get('filename')
+        time = datetime.datetime.now().strftime("%Y%m%d%H%M%S%f"
     else:
         return func.HttpResponse(
             "This endpoint only accepts application/json and application/pdf",

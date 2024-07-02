@@ -9,10 +9,8 @@ app = func.FunctionApp(http_auth_level=func.AuthLevel.ANONYMOUS)
 
 @app.route(route="HttpExample")
 def HttpExample(req: func.HttpRequest) -> func.HttpResponse:
-
-    '''
     logging.info('Python HTTP trigger function processed a request.')
-    hello_world()
+    # hello_world()
     name = req.params.get('name')
     print('params:', req.params)
     print('param name:', name)
@@ -31,8 +29,9 @@ def HttpExample(req: func.HttpRequest) -> func.HttpResponse:
              "This HTTP triggered function executed successfully. Pass a name in the query string or in the request body for a personalized response.",
              status_code=200
         )
-    '''
 
+@app.route(route="upload")
+def upload(req: func.HttpRequest) -> func.HttpResponse:
     content_type = req.headers.get('content-type')
     if not content_type:
         content_type = req.headers.get('Content-Type')

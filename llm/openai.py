@@ -1,10 +1,15 @@
 from io import BufferedReader
+from typing import List
 from .llmstrategy import LLMStrategy
 from utils import get_env_var
 from openai import OpenAI
 from openai import models
 from openai.types.beta.vector_store import VectorStore
-from openai.types.beta.vector_stores import VectorStoreFile
+from openai.types.beta.vector_stores import VectorStoreFile, VectorStoreFileBatch
+from openai.types.beta.threads.run import Run
+from openai.types.beta.threads.message import Message
+from openai.types.beta.threads.message_content import MessageContent
+import time
 
 
 GPT_MODELS = {
@@ -19,6 +24,8 @@ GPT_DEFAULT_MODELS = {
     "gpt4-turbo": "gpt-4-turbo",
     "gpt4o": "gpt-4o"
 }
+
+RUN_TERMINAL_STATES = ["requires_action", "cancelled", "completed", "failed", "expired", "incomplete"]
 
 client = OpenAI(api_key=get_env_var("OPENAI_API_KEY"))
 available_models = client.models.list()
@@ -71,20 +78,22 @@ class ChatGPTStrategy(LLMStrategy):
         )
         return chat_completion.choices[0].message.content
     
-    def upload_to_vector_store(self, file_buffer: BufferedReader) -> VectorStoreFile:
-        uploaded_file = client.beta.vector_stores.files.create_and_poll(
-            vector_store_id=vector_store.id,
-            file=file_buffer,
+    def upload_to_vector_store(self, file_buffer: BufferedReader) -> VectorStoreFileBatch:
+        file_batch: VectorStoreFileBatch = client.beta.vector_stores.file_batches.upload_and_poll(
+            vector_store_id=vector_store.id, files=[file_buffer]
         )
-        return uploaded_file
+        return file_batch
     
     def generate_response_from_file(self, prompt: str, file_buffer: BufferedReader) -> str:
-        uploaded_file = self.upload_to_vector_store(file_buffer)
+        # uploaded_file = self.upload_to_vector_store(file_buffer)
+        
+        print('Creating file...')
         message_file = client.files.create(
             file=file_buffer,
             purpose="assistants"
         )
         
+        print('Creating thread...')
         thread = client.beta.threads.create(
             messages=[
                 {
@@ -98,13 +107,29 @@ class ChatGPTStrategy(LLMStrategy):
             ],
         )
 
+        print('Creating run...')
         run = client.beta.threads.runs.create(
             thread_id=thread.id,
             assistant_id=assistant.id,
             instructions="You are an expert in analyzing documents and returning information read from them in a structured format. Use your knowledge base to answer questions from the documents provided.",
         )
 
-        return run.messages[-1].content
+        r: Run = None
+        while True:
+            r = client.beta.threads.runs.retrieve(thread_id=thread.id, run_id=run.id)
+            print('Run status:', r.status)
+            if r.status in RUN_TERMINAL_STATES:
+                break
+            time.sleep(1)
+            
+        print('Getting messages...')
+        messages: List[Message] = client.beta.threads.messages.list(thread_id=thread.id).data
+        print(messages)
+        print('0th message:', messages[0])
+        print('nth message:', messages[-1])
+        m: Message = messages[-1]
+        mC: MessageContent = m.content
+        return mC.text
 
 class GPT3Strategy(ChatGPTStrategy):
     def __init__(self) -> None:

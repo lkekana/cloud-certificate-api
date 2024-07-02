@@ -84,6 +84,41 @@ class ChatGPTStrategy(LLMStrategy):
         )
         return file_batch
     
+    def get_response_with_given_file_id(self, prompt: str, file_id: str) -> Message:
+        print('Creating thread...')
+        thread = client.beta.threads.create(
+            messages=[
+                {
+                    "role": "user",
+                    "content": prompt,
+                    "attachments": [{
+                        "file_id": file_id,
+                        "tools": [{ "type": "file_search"}],
+                    }],
+                }
+            ],
+        )
+
+        print('Creating run...')
+        run = client.beta.threads.runs.create(
+            thread_id=thread.id,
+            assistant_id=assistant.id,
+            instructions="You are an expert in analyzing documents and returning information read from them in a structured format. Use your knowledge base to answer questions from the documents provided.",
+        )
+
+        r: Run = None
+        while True:
+            r = client.beta.threads.runs.retrieve(thread_id=thread.id, run_id=run.id)
+            print('Run status:', r.status)
+            if r.status in RUN_TERMINAL_STATES:
+                break
+            time.sleep(1)
+            
+        print('Getting messages...')
+        messages: List[Message] = client.beta.threads.messages.list(thread_id=thread.id).data
+        m: Message = messages[0]
+        return m
+    
     def generate_response_from_file(self, prompt: str, file_buffer: BufferedReader) -> str:
         # uploaded_file = self.upload_to_vector_store(file_buffer)
         
@@ -124,12 +159,10 @@ class ChatGPTStrategy(LLMStrategy):
             
         print('Getting messages...')
         messages: List[Message] = client.beta.threads.messages.list(thread_id=thread.id).data
-        print(messages)
-        print('0th message:', messages[0])
-        print('nth message:', messages[-1])
-        m: Message = messages[-1]
+        print('Messages:', messages)
+        m: Message = messages[0]
         mC: MessageContent = m.content
-        return mC.text
+        return mC[0].text.value
 
 class GPT3Strategy(ChatGPTStrategy):
     def __init__(self) -> None:

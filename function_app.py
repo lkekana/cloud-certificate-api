@@ -4,6 +4,7 @@ import logging
 from file import hello_world
 from utils import parse_multipart_form_data
 import traceback
+import llm.openai
 
 
 app = func.FunctionApp(http_auth_level=func.AuthLevel.ANONYMOUS)

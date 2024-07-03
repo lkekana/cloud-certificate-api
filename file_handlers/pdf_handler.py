@@ -31,14 +31,14 @@ class PDFHandler(FileHandler):
     def process_file_with_custom_prompt(self, file_path: str, prompt: str) -> dict:
         file_buffer = open(file_path, "rb")
         if not self.is_pdf_scan(file_buffer):
-            response = self.strip_md(self.llm_strategy.generate_response_with_file(file_buffer))
+            response = self.strip_md(self.llm_strategy.generate_response_with_file(prompt, file_buffer))
             print(response)
             if not self.valid_response(response):
                 i = 1
                 while i < self.max_retry:
                     print("LLM gave invalid response, retrying...")
                     file_buffer.seek(0)
-                    response = self.strip_md(self.llm_strategy.generate_response_with_file(file_buffer))
+                    response = self.strip_md(self.llm_strategy.generate_response_with_file(prompt, file_buffer))
                     print(response)
                     if self.valid_response(response):
                         break
@@ -82,6 +82,7 @@ class PDFHandler(FileHandler):
             return {}
 
     def is_pdf_scan(self, file_buffer: BufferedReader) -> bool:
+        '''
         read_pdf = PdfReader(file_buffer)
         number_of_pages = read_pdf.get_num_pages()
         print("pdf has", number_of_pages, "pages")
@@ -94,6 +95,8 @@ class PDFHandler(FileHandler):
         print("file content:", file_content)
         if len(file_content) > 0:
             return False
+        return True
+        '''
         return True
 
     def get_images_from_pdf(self, file_path: str, image_prefix: str = datetime.now().strftime("%Y%m%d%H%M%S")) -> List[str]:

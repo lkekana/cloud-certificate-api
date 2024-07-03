@@ -12,5 +12,5 @@ class LLMStrategy(ABC):
         pass
 
     @abstractmethod
-    def generate_response_with_file(self, file_buffer: BufferedReader) -> str:
+    def generate_response_with_file(self, prompt: str, file_buffer: BufferedReader) -> str:
         pass

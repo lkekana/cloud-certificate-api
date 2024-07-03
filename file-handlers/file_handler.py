@@ -1,7 +1,6 @@
 from abc import ABC, abstractmethod
 from io import BufferedReader
 import json
-from typing import List
 from ..llm.llmstrategy import LLMStrategy
 from jsonschema import validate, ValidationError
 import traceback
@@ -65,6 +64,7 @@ class FileHandler(ABC):
     def __init__(self, llm_strategy: LLMStrategy, max_retry: int = 3) -> None:
         self.llm_strategy = llm_strategy
         self.max_retry = max_retry
+        self.default_prompt = "Using the information from the document, can you return the name & surname as 'name', certification as 'certification', qualification level as 'qualification_level', cloud provider as 'cloud_provider', issue date as 'issue_date', expiry date as 'expiry_date', and certificate id as 'certificate_id' in a JSON object with no extra information?"
 
     def process_file(self, file_buffer: BufferedReader) -> dict:
         pass

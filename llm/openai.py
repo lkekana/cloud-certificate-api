@@ -82,32 +82,26 @@ class ChatGPTStrategy(LLMStrategy):
         )
         return chat_completion.choices[0].message.content
     
-    def generate_response_with_image(self, prompt: str, base64_image: str) -> str:
+    def generate_response_with_images(self, prompt: str, base64_images: List[str]) -> str:
         headers = {
             "Content-Type": "application/json",
             "Authorization": f"Bearer {get_env_var('OPENAI_API_KEY')}"
         }
-
+        
+        content_list = [{"type": "text", "text": prompt}]
+        
+        for base64_image in base64_images:
+            content_list.append({"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{base64_image}"}})
+        
         payload = {
-            "model": self.model,
-            "messages": [
-                {
-                "role": "user",
-                "content": [
+                    "model": self.model,
+                    "messages": [
                     {
-                    "type": "text",
-                    "text": prompt
-                    },
-                    {
-                    "type": "image_url",
-                    "image_url": {
-                        "url": f"data:image/jpeg;base64,{base64_image}"
-                    }
-                    }
-                ]
-                }
-            ],
-            "max_tokens": self.max_tokens
+                        "role": "user",
+                        "content": content_list
+                        }
+                    ],
+                    "max_tokens": self.max_tokens
         }
 
         response = requests.post("https://api.openai.com/v1/chat/completions", headers=headers, json=payload)

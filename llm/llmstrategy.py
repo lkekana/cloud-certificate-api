@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 from io import BufferedReader
+from typing import List
 
 class LLMStrategy(ABC):
     @abstractmethod
@@ -7,7 +8,7 @@ class LLMStrategy(ABC):
         pass
 
     @abstractmethod
-    def generate_response_with_image(self, prompt: str, base64_image: str) -> str:
+    def generate_response_with_images(self, prompt: str, base64_images: List[str]) -> str:
         pass
 
     @abstractmethod

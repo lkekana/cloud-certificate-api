@@ -1,5 +1,6 @@
 import os
 from llm.openai import GPT4oStrategy
+from file_handlers.pdf_handler import PDFHandler
 from pypdf import PdfReader
 from pdf2image import convert_from_path
 from utils import encode_image
@@ -50,11 +51,19 @@ def main():
     print('='*50)
     print(response)
     '''
+    
+    '''
     strategy = GPT4oStrategy()
     # prompt = "What is the certificate number given in the document?"
     prompt = "Can you get the name & surname as 'name', institution as 'institution', and date as 'date' from the document and return it as a JSON object with no extra information?"
     b64 = encode_image(example_image_path)
     response = strategy.generate_response_with_images(prompt, [b64])
+    print(response)
+    '''
+    
+    strategy = GPT4oStrategy()
+    pdf_handler = PDFHandler(strategy)
+    response = pdf_handler.process_file(example_file_path)
     print(response)
     
 if __name__ == "__main__":

@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from io import BufferedReader
 import json
-from ..llm.llmstrategy import LLMStrategy
+from llm.llmstrategy import LLMStrategy
 from jsonschema import validate, ValidationError
 import traceback
 

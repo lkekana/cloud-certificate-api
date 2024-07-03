@@ -51,7 +51,7 @@ def main():
     print('='*50)
     print(response)
     '''
-    
+
     '''
     strategy = GPT4oStrategy()
     # prompt = "What is the certificate number given in the document?"
@@ -60,11 +60,11 @@ def main():
     response = strategy.generate_response_with_images(prompt, [b64])
     print(response)
     '''
-    
+
     strategy = GPT4oStrategy()
     pdf_handler = PDFHandler(strategy)
     response = pdf_handler.process_file(example_file_path)
     print(response)
-    
+
 if __name__ == "__main__":
     main()

@@ -1,5 +1,4 @@
 from abc import ABC, abstractmethod
-from io import BufferedReader
 import json
 from llm.llmstrategy import LLMStrategy
 from jsonschema import validate, ValidationError
@@ -68,10 +67,10 @@ class FileHandler(ABC):
         self.max_retry = max_retry
         self.default_prompt = "Using the information from the document, can you return the name & surname as 'name', certification as 'certification', qualification level as 'qualification_level', cloud provider as 'cloud_provider', issue date as 'issue_date', expiry date as 'expiry_date', and certificate id as 'certificate_id' in a JSON object with no extra information?"
 
-    def process_file(self, file_buffer: BufferedReader) -> dict:
+    def process_file(self, file_path: str) -> dict:
         pass
 
-    def process_file_with_custom_prompt(self, file_buffer: BufferedReader, prompt: str) -> dict:
+    def process_file_with_custom_prompt(self, file_path: str, prompt: str) -> dict:
         pass
 
     def valid_response(self, response: str) -> bool:

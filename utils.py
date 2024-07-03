@@ -17,7 +17,7 @@ def parse_multipart_form_data(req: func.HttpRequest) -> dict:
     content_type_header = req.headers.get('content-type')
     content_type, params = parse_options_header(content_type_header)
     boundary = params.get(b'boundary')
-    
+
     # Initialize storage for parsed data
     parsed_data = {"fields": {}, "files": {}}
 
@@ -44,7 +44,7 @@ def parse_multipart_form_data(req: func.HttpRequest) -> dict:
         'on_field': on_field,
         'on_file': on_file,
     }
-    
+
     print('content_type_header:', content_type_header)
     print('content_type:', content_type)
     print('boundary:', boundary)

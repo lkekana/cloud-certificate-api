@@ -81,18 +81,18 @@ class ChatGPTStrategy(LLMStrategy):
             ],
         )
         return chat_completion.choices[0].message.content
-    
+
     def generate_response_with_images(self, prompt: str, base64_images: List[str]) -> str:
         headers = {
             "Content-Type": "application/json",
             "Authorization": f"Bearer {get_env_var('OPENAI_API_KEY')}"
         }
-        
+
         content_list = [{"type": "text", "text": prompt}]
-        
+
         for base64_image in base64_images:
             content_list.append({"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{base64_image}"}})
-        
+
         payload = {
                     "model": self.model,
                     "messages": [
@@ -109,20 +109,20 @@ class ChatGPTStrategy(LLMStrategy):
             response.raise_for_status()
         except requests.exceptions.HTTPError as e:
             return f"Error: {e}"
-        
+
         try:
             completion = response.json()
             return completion["choices"][0]["message"]["content"]
         except Exception as e:
             print("Error:", e)
             return f"Error: {e}"
-    
+
     def upload_to_vector_store(self, file_buffer: BufferedReader) -> VectorStoreFileBatch:
         file_batch: VectorStoreFileBatch = client.beta.vector_stores.file_batches.upload_and_poll(
             vector_store_id=vector_store.id, files=[file_buffer]
         )
         return file_batch
-    
+
     def get_response_with_given_file_id(self, prompt: str, file_id: str) -> Message:
         print('Creating thread...')
         thread = client.beta.threads.create(
@@ -157,16 +157,16 @@ class ChatGPTStrategy(LLMStrategy):
         messages: List[Message] = client.beta.threads.messages.list(thread_id=thread.id).data
         m: Message = messages[0]
         return m
-    
+
     def generate_response_with_file(self, prompt: str, file_buffer: BufferedReader) -> str:
         # uploaded_file = self.upload_to_vector_store(file_buffer)
-        
+
         print('Creating file...')
         message_file = client.files.create(
             file=file_buffer,
             purpose="assistants"
         )
-        
+
         print('Creating thread...')
         thread = client.beta.threads.create(
             messages=[
@@ -195,7 +195,7 @@ class ChatGPTStrategy(LLMStrategy):
             if r.status in RUN_TERMINAL_STATES:
                 break
             time.sleep(1)
-            
+
         print('Getting messages...')
         messages: List[Message] = client.beta.threads.messages.list(thread_id=thread.id).data
         print('Messages:', messages)
@@ -206,16 +206,16 @@ class ChatGPTStrategy(LLMStrategy):
 class GPT3Strategy(ChatGPTStrategy):
     def __init__(self) -> None:
         super().__init__(GPT_DEFAULT_MODELS["gpt3"])
-    
+
 
 class GPT4Strategy(ChatGPTStrategy):
     def __init__(self) -> None:
         super().__init__(GPT_DEFAULT_MODELS["gpt4"])
-        
+
 class GPT4TurboStrategy(ChatGPTStrategy):
     def __init__(self) -> None:
         super().__init__(GPT_DEFAULT_MODELS["gpt4-turbo"])
-        
+
 class GPT4oStrategy(ChatGPTStrategy):
     def __init__(self) -> None:
         super().__init__(GPT_DEFAULT_MODELS["gpt4o"])

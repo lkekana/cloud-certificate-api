@@ -51,9 +51,11 @@ def main():
     print(response)
     '''
     strategy = GPT4oStrategy()
-    prompt = "What is the certificate number given in the document?"
+    # prompt = "What is the certificate number given in the document?"
+    prompt = "Can you get the name & surname as 'name', institution as 'institution', and date as 'date' from the document and return it as a JSON object with no extra information?"
     b64 = encode_image(example_image_path)
     response = strategy.generate_response_with_image(prompt, b64)
+    print(response)
     
 if __name__ == "__main__":
     main()

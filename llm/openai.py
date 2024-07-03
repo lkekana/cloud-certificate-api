@@ -9,6 +9,8 @@ from openai.types.beta.vector_stores import VectorStoreFile, VectorStoreFileBatc
 from openai.types.beta.threads.run import Run
 from openai.types.beta.threads.message import Message
 from openai.types.beta.threads.message_content import MessageContent
+from openai.types.completion import Completion
+from openai.types.completion_choice import CompletionChoice
 import time
 import requests
 
@@ -109,9 +111,17 @@ class ChatGPTStrategy(LLMStrategy):
         }
 
         response = requests.post("https://api.openai.com/v1/chat/completions", headers=headers, json=payload)
-
-        print_pretty(response.json())
-        return "Not implemented yet."
+        try:
+            response.raise_for_status()
+        except requests.exceptions.HTTPError as e:
+            return f"Error: {e}"
+        
+        try:
+            completion = response.json()
+            return completion["choices"][0]["message"]["content"]
+        except Exception as e:
+            print("Error:", e)
+            return f"Error: {e}"
     
     def upload_to_vector_store(self, file_buffer: BufferedReader) -> VectorStoreFileBatch:
         file_batch: VectorStoreFileBatch = client.beta.vector_stores.file_batches.upload_and_poll(

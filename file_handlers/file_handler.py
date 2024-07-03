@@ -4,6 +4,8 @@ import json
 from llm.llmstrategy import LLMStrategy
 from jsonschema import validate, ValidationError
 import traceback
+import strip_markdown
+from get_code_from_markdown import *
 
 '''
 when parsing cloud certificate data, we need to check if the response contains the following:
@@ -88,3 +90,10 @@ class FileHandler(ABC):
             return False
 
         return True
+
+    def strip_md(self, text: str):
+        # replace all "```json" with "```" to avoid JSON parsing errors
+        print(text)
+        text = text.replace("```json", "```")
+        text = text.replace("``` json", "```")
+        return strip_markdown.strip_markdown(text)

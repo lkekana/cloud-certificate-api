@@ -31,14 +31,14 @@ class PDFHandler(FileHandler):
     def process_file_with_custom_prompt(self, file_path: str, prompt: str) -> dict:
         file_buffer = open(file_path, "rb")
         if not self.is_pdf_scan(file_buffer):
-            response = self.llm_strategy.generate_response_with_file(file_buffer)
+            response = self.strip_md(self.llm_strategy.generate_response_with_file(file_buffer))
             print(response)
             if not self.valid_response(response):
                 i = 1
                 while i < self.max_retry:
                     print("LLM gave invalid response, retrying...")
                     file_buffer.seek(0)
-                    response = self.llm_strategy.generate_response_with_file(file_buffer)
+                    response = self.strip_md(self.llm_strategy.generate_response_with_file(file_buffer))
                     print(response)
                     if self.valid_response(response):
                         break
@@ -60,13 +60,13 @@ class PDFHandler(FileHandler):
             b64 = encode_image(image_path)
             base64_images.append(b64)
 
-        response = self.llm_strategy.generate_response_with_images(prompt, base64_images)
+        response = self.strip_md(self.llm_strategy.generate_response_with_images(prompt, base64_images))
         print(response)
         if not self.valid_response(response):
             i = 1
             while i < self.max_retry:
                 print("LLM gave invalid response, retrying...")
-                response = self.llm_strategy.generate_response_with_images(prompt, base64_images)
+                response = self.strip_md(self.llm_strategy.generate_response_with_images(prompt, base64_images))
                 print(response)
                 if self.valid_response(response):
                     break

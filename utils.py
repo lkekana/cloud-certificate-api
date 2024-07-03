@@ -24,7 +24,7 @@ def parse_multipart_form_data(req: func.HttpRequest) -> dict:
     # Callbacks for handling parsed fields and files
     def on_field(field: Field):
         logging.info(f"Parsed field named {field.field_name} with value {field.value}")
-        parsed_data["fields"][field.field_name] = field.value
+        parsed_data["fields"][str(field.field_name)] = str(field.value)
 
     def on_file(file: File):
         # Assuming file content is stored in memory, for large files consider streaming to storage
@@ -37,7 +37,7 @@ def parse_multipart_form_data(req: func.HttpRequest) -> dict:
         # print(file.actual_file_name)
         # file.flush_to_disk()
         # print(file.actual_file_name)
-        parsed_data["files"][file.file_name] = {"length": length, "content": file_bytes}
+        parsed_data["files"][str(file.file_name)] = {"length": length, "content": file_bytes}
 
     # Create the parser with callbacks
     callbacks = {

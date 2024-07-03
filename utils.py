@@ -1,3 +1,4 @@
+import base64
 import azure.functions as func
 import logging
 from multipart import MultipartParser
@@ -9,6 +10,7 @@ import cgi
 import os
 from dotenv import load_dotenv
 load_dotenv()
+from pprint import pprint
 
 def parse_multipart_form_data(req: func.HttpRequest) -> dict:
     # Extract the boundary from the content type header
@@ -54,3 +56,10 @@ def parse_multipart_form_data(req: func.HttpRequest) -> dict:
 
 def get_env_var(name: str) -> str:
     return os.getenv(name)
+
+def encode_image(image_path):
+  with open(image_path, "rb") as image_file:
+    return base64.b64encode(image_file.read()).decode('utf-8')
+
+def print_pretty(data):
+    pprint(data)

@@ -2,13 +2,17 @@ import os
 from llm.openai import GPT4oStrategy
 from pypdf import PdfReader
 from pdf2image import convert_from_path
+from utils import encode_image
 
 TMP_DIR = "tmp"
 
 example_file_path = "samples\BenJoubert-BTech-IT-SoftwareDevelopment-2017-04-08_20240513_0001.pdf"
 example_file = open(example_file_path, "rb")
 
+example_image_path = "tmp\page_0.png"
+
 def main():
+    '''
     if not os.path.exists(TMP_DIR):
         os.makedirs(TMP_DIR)
 
@@ -42,9 +46,14 @@ def main():
     
     strategy = GPT4oStrategy()
     prompt = "What is the certificate number given in the document?"
-    response = strategy.generate_response_from_file(prompt, example_file)
+    response = strategy.generate_response_with_file(prompt, example_file)
     print('='*50)
     print(response)
+    '''
+    strategy = GPT4oStrategy()
+    prompt = "What is the certificate number given in the document?"
+    b64 = encode_image(example_image_path)
+    response = strategy.generate_response_with_image(prompt, b64)
     
 if __name__ == "__main__":
     main()

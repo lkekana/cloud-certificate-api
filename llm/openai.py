@@ -1,7 +1,7 @@
 from io import BufferedReader
 from typing import List
 from .llmstrategy import LLMStrategy
-from utils import get_env_var
+from utils import get_env_var, print_pretty
 from openai import OpenAI
 from openai import models
 from openai.types.beta.vector_store import VectorStore
@@ -10,6 +10,7 @@ from openai.types.beta.threads.run import Run
 from openai.types.beta.threads.message import Message
 from openai.types.beta.threads.message_content import MessageContent
 import time
+import requests
 
 
 GPT_MODELS = {
@@ -46,14 +47,15 @@ def get_and_set_vector_store() -> VectorStore:
 vector_store: VectorStore = get_and_set_vector_store()
 
 class ChatGPTStrategy(LLMStrategy):
-    def __init__(self, model: str = GPT_DEFAULT_MODELS["gpt4o"]) -> None:
+    def __init__(self, model: str = GPT_DEFAULT_MODELS["gpt4o"], max_tokens: int = 300) -> None:
         if model not in available_models_names:
             if model == GPT_DEFAULT_MODELS["gpt4o"]:
                 raise ValueError(f"Default model {model} not available. Available models are: {available_models_names}")
             model = GPT_DEFAULT_MODELS["gpt4o"]
             print(f"Model {model} not available. Using default model {model}")
         self.model = model
-        
+        self.max_tokens = max_tokens
+
         global assistant
         assistant = client.beta.assistants.create(
             name="Document Analyst Assistant",
@@ -62,7 +64,7 @@ class ChatGPTStrategy(LLMStrategy):
             tools=[{"type": "file_search"}],
             tool_resources={"file_search": {"vector_store_ids": [vector_store.id]}},
         )
-        
+
         super().__init__()
 
     def generate_response(self, prompt: str) -> str:
@@ -77,6 +79,39 @@ class ChatGPTStrategy(LLMStrategy):
             ],
         )
         return chat_completion.choices[0].message.content
+    
+    def generate_response_with_image(self, prompt: str, base64_image: str) -> str:
+        headers = {
+            "Content-Type": "application/json",
+            "Authorization": f"Bearer {get_env_var('OPENAI_API_KEY')}"
+        }
+
+        payload = {
+            "model": self.model,
+            "messages": [
+                {
+                "role": "user",
+                "content": [
+                    {
+                    "type": "text",
+                    "text": prompt
+                    },
+                    {
+                    "type": "image_url",
+                    "image_url": {
+                        "url": f"data:image/jpeg;base64,{base64_image}"
+                    }
+                    }
+                ]
+                }
+            ],
+            "max_tokens": self.max_tokens
+        }
+
+        response = requests.post("https://api.openai.com/v1/chat/completions", headers=headers, json=payload)
+
+        print_pretty(response.json())
+        return "Not implemented yet."
     
     def upload_to_vector_store(self, file_buffer: BufferedReader) -> VectorStoreFileBatch:
         file_batch: VectorStoreFileBatch = client.beta.vector_stores.file_batches.upload_and_poll(
@@ -119,7 +154,7 @@ class ChatGPTStrategy(LLMStrategy):
         m: Message = messages[0]
         return m
     
-    def generate_response_from_file(self, prompt: str, file_buffer: BufferedReader) -> str:
+    def generate_response_with_file(self, prompt: str, file_buffer: BufferedReader) -> str:
         # uploaded_file = self.upload_to_vector_store(file_buffer)
         
         print('Creating file...')

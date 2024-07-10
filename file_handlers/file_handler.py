@@ -7,17 +7,6 @@ import strip_markdown
 from get_code_from_markdown import *
 
 '''
-when parsing cloud certificate data, we need to check if the response contains the following:
-- name & surname
-- certification
-- qualification level (optional)
-- cloud provider
-- issue date
-- expiry date (optional)
-- certificate id
-'''
-
-'''
 json structure:
 {
     "name": "John Doe",
@@ -30,42 +19,28 @@ json structure:
 }
 '''
 
-'''
-json schema:
-{
-    "type": "object",
-    "properties": {
-        "name": {"type": "string"},
-        "certification": {"type": "string"},
-        "qualification_level": {"type": "string"},
-        "cloud_provider": {"type": "string"},
-        "issue_date": {"type": "string"},
-        "expiry_date": {"type": "string"},
-        "certificate_id": {"type": "string"}
-    },
-    "required": ["name", "certification", "cloud_provider", "issue_date", "certificate_id"]
-}
-'''
-
 JSON_SCHEMA = {
     "type": "object",
     "properties": {
-        "name": {"type": "string"},
+        "first_names": {"type": "string"},
+        "surname": {"type": "string"},
         "certification": {"type": "string"},
         "qualification_level": {"type": "string"},
         "cloud_provider": {"type": "string"},
         "issue_date": {"type": "string"},
         "expiry_date": {"type": "string"},
-        "certificate_id": {"type": "string"}
+        "certificate_id": {"type": "string"},
+        "issuing_organization": {"type": "string"},
+        "certification_url": {"type": "string"},
     },
-    "required": ["name", "certification", "cloud_provider", "issue_date", "certificate_id"]
+    "required": ["first_names", "surname", "certification", "qualification_level", "cloud_provider", "issue_date", "certificate_id", "issuing_organization"]
 }
 
 class FileHandler(ABC):
     def __init__(self, llm_strategy: LLMStrategy, max_retry: int = 3) -> None:
         self.llm_strategy = llm_strategy
         self.max_retry = max_retry
-        self.default_prompt = "Using the information from the document, can you return the name & surname as 'name', certification as 'certification', qualification level as 'qualification_level', cloud provider as 'cloud_provider', issue date as 'issue_date', expiry date as 'expiry_date', and certificate id as 'certificate_id' in a JSON object with no extra information?"
+        self.default_prompt = "Using the information from the document, can you return a JSON object (with no extra information except the fields required) that adheres to the given schema? schema: " + json.dumps(JSON_SCHEMA)
 
     def process_file(self, file_path: str) -> dict:
         pass

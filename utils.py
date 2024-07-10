@@ -29,11 +29,15 @@ def parse_multipart_form_data(req: func.HttpRequest) -> dict:
     def on_file(file: File):
         # Assuming file content is stored in memory, for large files consider streaming to storage
         logging.info(f"Parsed file named {file.field_name} with filename {file.file_name}")
-        f: io.BytesIO = file.file_object
-        file_bytes = f.getvalue()
+        print('file type:', type(file) )
+        print('file obj type:', type(file.file_object))
+        f: io.BytesIO | io.BufferedRandom | any = file.file_object
+        f.seek(0)
+        file_bytes = f.read()
         length = len(file_bytes)
         print('file length:', length, len(file_bytes))
-        print(f.getvalue()[0:10])
+        f.seek(0)
+        print(f.read()[0:10])
         # print(file.actual_file_name)
         # file.flush_to_disk()
         # print(file.actual_file_name)
@@ -51,6 +55,8 @@ def parse_multipart_form_data(req: func.HttpRequest) -> dict:
     content_type_str = content_type.decode('utf-8')
     parser = FormParser(content_type_str, on_field, on_file, boundary=boundary)
     body = req.get_body()
+    print('body:', body[0:10])
+    print('body length:', len(body))
     parser.write(body)
     return parsed_data
 

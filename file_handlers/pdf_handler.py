@@ -6,9 +6,11 @@ import json
 from llm.llmstrategy import LLMStrategy
 from jsonschema import validate, ValidationError
 from pypdf import PdfReader
-from pdf2image import convert_from_path, convert_from_bytes
+# from pdf2image import convert_from_path, convert_from_bytes
 from typing import List
 from utils import encode_image
+import pymupdf
+from pymupdf import Document, Page, Pixmap
 
 TMP_DIR = "tmp"
 
@@ -100,6 +102,7 @@ class PDFHandler(FileHandler):
         return True
 
     def get_images_from_pdf(self, file_path: str, image_prefix: str = datetime.now().strftime("%Y%m%d%H%M%S")) -> List[str]:
+        '''
         images = convert_from_path(file_path)
         image_paths = []
 
@@ -108,4 +111,24 @@ class PDFHandler(FileHandler):
             image_path = os.path.join(TMP_DIR, image_path)
             image.save(image_path, "PNG")
             image_paths.append(image_path)
+        return image_paths
+        '''
+        
+        doc: Document = pymupdf.open(file_path)
+        image_paths = []
+        for i in range(len(doc)):
+            page: Page = doc[i]
+            image_list = page.get_images()
+            for image_index, img in enumerate(image_list, start=1):
+                xref = img[0]
+                pix: Pixmap = Pixmap(doc, xref)
+                if pix.n - pix.alpha > 3:
+                    pix = Pixmap(pymupdf.csRGB, pix)
+
+                image_path = f"{image_prefix}_page_{i}-image_{image_index}.png"
+                image_path = os.path.join(TMP_DIR, image_path)
+                pix.save(image_path)
+                image_paths.append(image_path)
+                pix = None
+        doc.close()
         return image_paths
